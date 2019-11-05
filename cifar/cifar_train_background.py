@@ -40,6 +40,9 @@
 #
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import time
+t0 = time.time()
+
 import io
 import logging
 import numpy as np
@@ -67,6 +70,8 @@ from models.weighted_resnet_model import WeightedResnetModel    # NOQA
 from models.reweight_model import reweight_autodiff
 
 log = logger.get()
+
+times = []
 
 
 def _get_config():
@@ -368,6 +373,11 @@ def save(sess, saver, global_step, config, save_folder):
 
 
 def finetune_model(sess, exp_id, config, trn_data, data, model, val_model, save_folder=None):
+    print ("finetune model")
+    print (time.time() - t0)
+    times.append(time.time() - t0)
+    np.savetxt(os.path.join(save_folder, 'times.txt'))
+
     mvalid = val_model
 
     # Train loop.
@@ -403,7 +413,10 @@ def finetune_model(sess, exp_id, config, trn_data, data, model, val_model, save_
         max_train_iter = 2000
     else:
         max_train_iter = niter_start + 5000
-    it = tqdm(six.moves.xrange(niter_start, max_train_iter), desc=exp_id, ncols=0)
+    if FLAGS.test_code:
+        it = tqdm(six.moves.xrange(niter_start, niter_start+3), desc=exp_id, ncols=0)
+    else:
+        it = tqdm(six.moves.xrange(niter_start, max_train_iter), desc=exp_id, ncols=0)
     for niter in it:
         lr_scheduler.step(niter)
         ce = finetune_step(sess, model, data)
@@ -422,8 +435,13 @@ def finetune_model(sess, exp_id, config, trn_data, data, model, val_model, save_
 
         # Save model.
         if (niter + 1) % FLAGS.save_interval == 0 or niter == 0:
+            print ("finetune model (SAVING)")
+            print (time.time() - t0)
+            times.append(time.time() - t0)
+            np.savetxt(os.path.join(save_folder, 'times.txt'))
             if save_folder is not None:
                 save(sess, saver, model.global_step, config, save_folder)
+
 
         # Show on progress bar.
         if (niter + 1) % FLAGS.log_interval == 0 or niter == 0:
@@ -477,6 +495,8 @@ def train_model(sess,
     :return:                     [float]      Final validation accuracy.
     """
     mvalid = val_model
+    print ("train model")
+    print (time.time() - t0)
 
     # Train loop.
     ce = 0.0
@@ -505,7 +525,10 @@ def train_model(sess,
             config.optimizer_config.learn_rate_scheduler))
 
     max_train_iter = config.optimizer_config.max_train_iter
-    it = tqdm(six.moves.xrange(niter_start, max_train_iter), desc=exp_id, ncols=0)
+    if FLAGS.test_code:
+        it = tqdm(six.moves.xrange(niter_start, niter_start+3), desc=exp_id, ncols=0)
+    else:
+        it = tqdm(six.moves.xrange(niter_start, max_train_iter), desc=exp_id, ncols=0)
     for niter in it:
         lr_scheduler.step(niter)
         ce = train_step(
@@ -529,6 +552,10 @@ def train_model(sess,
 
         # Save model.
         if (niter + 1) % FLAGS.save_interval == 0 or niter == 0:
+            print ("train model (SAVING)")
+            print (time.time() - t0)
+            times.append(time.time() - t0)
+            np.savetxt(os.path.join(save_folder, 'times.txt'))
             if save_folder is not None:
                 save(sess, saver, model_c.global_step, config, save_folder)
 
@@ -559,6 +586,10 @@ def train_model(sess,
 
 
 def main():
+    print ("main")
+    print (time.time() - t0)
+    times.append(time.time() - t0)
+    np.savetxt(os.path.join(save_folder, 'times.txt'))
     # -----------------------------------------------------------------
     # Loads parammeters.
     config = _get_config()
@@ -707,6 +738,7 @@ if __name__ == '__main__':
     flags.DEFINE_bool('ratio', False, 'Use ratio baseline')
     flags.DEFINE_bool('restore', False, 'Whether restore model')
     flags.DEFINE_bool('verbose', True, 'Whether to show logging.INFO')
+    flags.DEFINE_bool('test_code', False, 'run very short experiment') #DK
     flags.DEFINE_float('noise_ratio', 0.4, 'Noise ratio in the noisy training set')
     flags.DEFINE_integer('bsize_a', 100, 'Batch size multiplier for data A')
     flags.DEFINE_integer('bsize_b', 100, 'Batch size multiplier for data B')
