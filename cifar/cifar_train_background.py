@@ -383,6 +383,7 @@ def finetune_model(sess, exp_id, config, trn_data, data, model, val_model, save_
     # Train loop.
     ce = 0.0
     trn_acc = 0.0
+    trn_clean_acc = 0.0
     val_acc = 0.0
     saver = tf.train.Saver()
     # Logger.
@@ -424,9 +425,11 @@ def finetune_model(sess, exp_id, config, trn_data, data, model, val_model, save_
         # Evaluate accuracy.
         if (niter + 1) % FLAGS.eval_interval == 0 or niter == niter_start:
             trn_acc, _ = evaluate(sess, model, 100, trn_data)
+            trn_clean_acc, _ = evaluate(sess, model_c, 100, data_b)
             val_acc, val_ce = evaluate(sess, val_model, 50)
             if save_folder is not None:
                 exp_logger.log(niter + 1, 'train ft acc', trn_acc * 100.0)
+                exp_logger.log(niter + 1, 'train_clean ft acc', trn_clean_acc * 100.0)
                 exp_logger.log(niter + 1, 'val ft acc', val_acc * 100.0)
                 exp_logger.log(niter + 1, 'lr', lr_scheduler.learn_rate)
                 if niter > 0:
@@ -450,6 +453,7 @@ def finetune_model(sess, exp_id, config, trn_data, data, model, val_model, save_
             disp_dict = {
                 'ce': '{:.3e}'.format(ce),
                 'train_acc': '{:.3f}%'.format(trn_acc * 100),
+                'train_clean_acc': '{:.3f}%'.format(trn_clean_acc * 100),
                 'val_acc': '{:.3f}%'.format(val_acc * 100),
                 'lr': '{:.3e}'.format(lr_scheduler.learn_rate)
             }
@@ -501,6 +505,7 @@ def train_model(sess,
     # Train loop.
     ce = 0.0
     trn_acc = 0.0
+    trn_clean_acc = 0.0
     val_acc = 0.0
     saver = tf.train.Saver()
     # Logger.
@@ -537,11 +542,13 @@ def train_model(sess,
         # Evaluate accuracy.
         if (niter + 1) % FLAGS.eval_interval == 0 or niter == 0:
             trn_acc, _ = evaluate(sess, model_c, 100, data_a)
+            trn_clean_acc, _ = evaluate(sess, model_c, 100, data_b)
             val_acc, val_ce = evaluate(sess, val_model, 50)
             if noisy_val_model is not None:
                 noisy_val_acc, noisy_val_ce = evaluate(sess, noisy_val_model, 50)
             if save_folder is not None:
                 exp_logger.log(niter + 1, 'train acc', trn_acc * 100.0)
+                exp_logger.log(niter + 1, 'train_clean acc', trn_clean_acc * 100.0)
                 exp_logger.log(niter + 1, 'val acc', val_acc * 100.0)
                 if noisy_val_model is not None:
                     exp_logger.log(niter + 1, 'val noisy acc', noisy_val_acc * 100.0)
@@ -566,6 +573,7 @@ def train_model(sess,
             disp_dict = {
                 'ce': '{:.3e}'.format(ce),
                 'train_acc': '{:.3f}%'.format(trn_acc * 100),
+                'train_clean_acc': '{:.3f}%'.format(trn_clean_acc * 100),
                 'val_acc': '{:.3f}%'.format(val_acc * 100),
                 'lr': '{:.3e}'.format(lr_scheduler.learn_rate)
             }
@@ -645,7 +653,8 @@ def main():
         # -----------------------------------------------------------------
         # Save folder.
         if FLAGS.results is not None:
-            save_folder = os.path.realpath(os.path.abspath(os.path.join(FLAGS.results, exp_id)))
+            if 0:
+                save_folder = os.path.realpath(os.path.abspath(os.path.join(FLAGS.results, exp_id)))
             if not os.path.exists(save_folder):
                 os.makedirs(save_folder)
         else:
@@ -731,26 +740,26 @@ def main():
 
 if __name__ == '__main__':
     flags = tf.flags
-    flags.DEFINE_bool('baseline', False, 'Run non-reweighting baseline')
+    flags.DEFINE_bool('baseline', False, 'Run non-reweighting baseline') #
     flags.DEFINE_bool('eval', False, 'Whether run evaluation only')
-    flags.DEFINE_bool('finetune', False, 'Whether to finetune model')
-    flags.DEFINE_bool('random_weight', False, 'Use random weights')
+    flags.DEFINE_bool('finetune', False, 'Whether to finetune model ONLY') # DK: this ONLY does fine tuning (skips training)
+    flags.DEFINE_bool('random_weight', False, 'Use random weights') #
     flags.DEFINE_bool('ratio', False, 'Use ratio baseline')
     flags.DEFINE_bool('restore', False, 'Whether restore model')
     flags.DEFINE_bool('verbose', True, 'Whether to show logging.INFO')
-    flags.DEFINE_bool('test_code', False, 'run very short experiment') #DK
-    flags.DEFINE_float('noise_ratio', 0.4, 'Noise ratio in the noisy training set')
-    flags.DEFINE_integer('bsize_a', 100, 'Batch size multiplier for data A')
+    flags.DEFINE_bool('test_code', False, 'run very short experiment') # DK
+    flags.DEFINE_float('noise_ratio', 0.4, 'Noise ratio in the noisy training set') #
+    flags.DEFINE_integer('bsize_a', 100, 'Batch size multiplier for data A') #??
     flags.DEFINE_integer('bsize_b', 100, 'Batch size multiplier for data B')
     flags.DEFINE_integer('eval_interval', 1000, 'Number of steps between evaluations')
     flags.DEFINE_integer('log_interval', 10, 'Interval for writing loss values to TensorBoard')
-    flags.DEFINE_integer('num_clean', 100, 'Number of clean images in the training set')
-    flags.DEFINE_integer('num_val', 5000, 'Number of validation images')
+    flags.DEFINE_integer('num_clean', 100, 'Number of clean images in the training set') #
+    flags.DEFINE_integer('num_val', 5000, 'Number of validation images') #
     flags.DEFINE_integer('save_interval', 10000, 'Number of steps between checkpoints')
     flags.DEFINE_integer('seed', 0, 'Random seed for creating the split')
     flags.DEFINE_string('config', None, 'Manually defined config file')
     flags.DEFINE_string('data_root', './data', 'Data folder')
-    flags.DEFINE_string('dataset', 'cifar-10', 'Dataset name')
+    flags.DEFINE_string('dataset', 'cifar-10', 'Dataset name') #
     flags.DEFINE_string('id', None, 'Experiment ID')
     flags.DEFINE_string('results', './results/cifar', 'Saving folder')
     FLAGS = flags.FLAGS
