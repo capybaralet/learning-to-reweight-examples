@@ -376,7 +376,7 @@ def finetune_model(sess, exp_id, config, trn_data, data, model, val_model, save_
     print ("finetune model")
     print (time.time() - t0)
     times.append(time.time() - t0)
-    np.savetxt(os.path.join(save_folder, 'times.txt'))
+    #np.savetxt(os.path.join(save_folder, 'times.txt'))
 
     mvalid = val_model
 
@@ -441,7 +441,7 @@ def finetune_model(sess, exp_id, config, trn_data, data, model, val_model, save_
             print ("finetune model (SAVING)")
             print (time.time() - t0)
             times.append(time.time() - t0)
-            np.savetxt(os.path.join(save_folder, 'times.txt'))
+            #np.savetxt(os.path.join(save_folder, 'times.txt'))
             if save_folder is not None:
                 save(sess, saver, model.global_step, config, save_folder)
 
@@ -562,7 +562,10 @@ def train_model(sess,
             print ("train model (SAVING)")
             print (time.time() - t0)
             times.append(time.time() - t0)
-            np.savetxt(os.path.join(save_folder, 'times.txt'))
+            print (os.path.join(save_folder, 'times.txt'))
+            #np.savetxt(os.path.join(save_folder, 'times.txt'))
+            print (os.path.join(save_folder, 'times.txt'))
+            #print ("train model (SAVED)")
             if save_folder is not None:
                 save(sess, saver, model_c.global_step, config, save_folder)
 
@@ -594,10 +597,6 @@ def train_model(sess,
 
 
 def main():
-    print ("main")
-    print (time.time() - t0)
-    times.append(time.time() - t0)
-    np.savetxt(os.path.join(save_folder, 'times.txt'))
     # -----------------------------------------------------------------
     # Loads parammeters.
     config = _get_config()
@@ -653,8 +652,10 @@ def main():
         # -----------------------------------------------------------------
         # Save folder.
         if FLAGS.results is not None:
-            if 0:
+            if 1:
                 save_folder = os.path.realpath(os.path.abspath(os.path.join(FLAGS.results, exp_id)))
+            else:
+                save_folder = FLAGS.results
             if not os.path.exists(save_folder):
                 os.makedirs(save_folder)
         else:
@@ -767,4 +768,8 @@ if __name__ == '__main__':
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.WARNING)
+    flags_dict = FLAGS.__dict__
+    #for k in flags_dict:
+    #    log.info(k, str(flags_dict[k]))
+    print("FLAGS.num_clean", FLAGS.num_clean)
     main()

@@ -189,12 +189,16 @@ def read_cifar_100(data_folder):
     test_file_list = ['test']
 
     data_dict = _unpickle(os.path.join(data_folder, 'cifar-100-python', train_file_list[0]))
-    train_img = data_dict['data']
-    train_label = np.array(data_dict['fine_labels'])
+    #train_img = data_dict['data']
+    #train_label = np.array(data_dict['fine_labels'])
+    train_img = data_dict[b'data']
+    train_label = np.array(data_dict[b'fine_labels'])
 
     data_dict = _unpickle(os.path.join(data_folder, 'cifar-100-python', test_file_list[0]))
-    test_img = data_dict['data']
-    test_label = np.array(data_dict['fine_labels'])
+    #test_img = data_dict['data']
+    #test_label = np.array(data_dict['fine_labels'])
+    test_img = data_dict[b'data']
+    test_label = np.array(data_dict[b'fine_labels'])
 
     train_img = train_img.reshape([-1, 3, 32, 32])
     train_img = train_img.transpose([0, 2, 3, 1])

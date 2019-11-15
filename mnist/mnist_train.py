@@ -393,6 +393,10 @@ def run(dataset, exp_name, seed, verbose=True):
                     ex_wts_: ex_weights,
                     lr_: lr
                 })
+            if 0 and verbose:
+                train_acc, test_acc = evaluate(sess, x_, y_, acc_, train_set, test_set)
+                print('Step', step + 1, 'Loss', loss, 'Train acc', train_acc, 'Test acc',
+                      test_acc)
             if (step + 1) % 100 == 0:
                 train_acc, test_acc = evaluate(sess, x_, y_, acc_, train_set, test_set)
                 if verbose:
