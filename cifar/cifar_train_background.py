@@ -620,7 +620,9 @@ def main():
         log.info('Setting tensorflow random seed={:d}'.format(config.seed))
         tf.set_random_seed(config.seed)
 
-    with tf.Graph().as_default(), tf.Session() as sess:
+    sess_config = tf.ConfigProto()
+    sess_config.gpu_options.allow_growth=True
+    with tf.Graph().as_default(), tf.Session(config=sess_config) as sess:
         # -----------------------------------------------------------------
         # Building datasets.
         dataset_a = _get_noisy_data_inputs(bsize_a, seed=0)
